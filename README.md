@@ -4,6 +4,14 @@
 
 本仓库是独立新工程，参考 [lico-n/ZygiskFrida](https://github.com/lico-n/ZygiskFrida)（MIT）的注入思路，重写了 Zygisk 模块并补齐了版本统一、检测面处理和状态管理。
 
+<p align="center">
+  <img src="docs/webui-1.png" width="330" alt="WebUI 状态卡与安装自检">
+  <img src="docs/webui-2.png" width="330" alt="注入目标、去特征开关与来源">
+</p>
+
+<p align="center"><sub>Pixel 6 实拍：状态卡 / 安装自检 / 目标管理 / 去特征开关 / 来源信息</sub></p>
+
+
 ---
 
 ## 1. 它解决什么
