@@ -252,8 +252,14 @@ native/
   build.sh        NDK 编译脚本
 module/           安装到设备的模块文件（含 webroot WebUI）
 gadget/           官方 frida-gadget 17.5.2 xz 压缩包
-tools/            打包脚本 + PC 状态查询
+tools/
+  build_zip.py      打包模块 zip（版本号取自 module.prop）
+  status.py         PC 端查状态
+  load_hook.py      PC 端通过 listen 端口加载 hook 脚本
 docs/
+  手机端使用说明.md   hook.js 放哪 / 怎么写 / 参数意义 / 持久化机制
+  PC端使用说明.md     连接拓扑 / 四种连接方式 / 报错对照表
+  hooks/             5 个 hook 模板（native / SSL / 加密 / JNI）
   配置说明.md         全部参数 / 生效条件 / 排错表
   去特征说明.md       检测面清单 / 实测数据 / 仍然存在的检测面
   真机验证报告.md      Pixel 6 完整验证记录
@@ -278,6 +284,42 @@ Pixel 6 / Android 15 / KernelSU + Zygisk Next 1.5.2 / SukiSU 4.1.0 上全程实�
 | listen 模式 | `frida-ps -H 127.0.0.1:27052` → `Gadget`，脚本加载成功 |
 | 双路共存 | server `39527` 与 gadget `27052` 同时工作 |
 | 管理层 | `action.sh` / `status.py` / WebUI 状态与交互全部验证通过 |
+
+### 8.2 上手文档与 hook 模板
+
+装好模块之后怎么真正写 hook，看这两份：
+
+| 文档 | 讲什么 |
+|---|---|
+| [docs/手机端使用说明.md](docs/手机端使用说明.md) | hook.js 放哪、怎么写、`settings.conf` 每个参数的意义、持久化到底持久在哪、常见故障 |
+| [docs/PC端使用说明.md](docs/PC端使用说明.md) | PC 如何连上 gadget、四种连接方式、脚本打包、报错对照表 |
+
+开箱可用的模板在 [docs/hooks/](docs/hooks/)：
+
+| 模板 | 需要打包 | 用途 |
+|---|---|---|
+| `00-hello.js` | 否 | 验证链路：pid / 包名 / frida 版本 / 已加载 so |
+| `01-native-trace.js` | 否 | dlopen、文件访问、SSL 明文、strcmp |
+| `02-ssl-bypass.js` | ✅ | TrustManager / OkHttp Pinner / HostnameVerifier / Conscrypt |
+| `03-crypto-hook.js` | ✅ | Cipher / MessageDigest / HMAC / SecretKeySpec / IV / Base64 |
+| `04-jni-register.js` | 否 | 枚举 `RegisterNatives` 映射并追踪调用 |
+
+最短路径（手机端持久化，纯 native 脚本）：
+
+```bash
+adb push docs/hooks/00-hello.js /data/local/tmp/gs.js
+adb shell su -c 'cp /data/local/tmp/gs.js /data/local/tmp/.gsys/hook.js'
+adb shell su -c 'chcon u:object_r:system_file:s0 /data/local/tmp/.gsys/hook.js'
+adb shell am force-stop <包名> && adb shell monkey -p <包名> -c android.intent.category.LAUNCHER 1
+adb shell su -c 'cat /data/user/0/<包名>/gs-hook.log'
+```
+
+Java 脚本（`02`/`03`）必须先打包——frida 17 起 GumJS 不再内置 `Java`，直接扔进去会报 `Java is not defined`：
+
+```bash
+cd docs/hooks && npm install && npm run build
+python tools/load_hook.py --script docs/hooks/dist/02-ssl-bypass.js
+```
 
 ## 9. 来源与署名
 
@@ -314,6 +356,14 @@ Pixel 6 / Android 15 / KernelSU + Zygisk Next 1.5.2 / SukiSU 4.1.0 上全程实�
 ---
 
 ## 11. 更新日志
+
+**文档补充（1.0.1 之后，未改模块代码）**
+
+- 新增 [docs/手机端使用说明.md](docs/手机端使用说明.md)：脚本位置、三条硬规则、参数表、持久化机制、故障排查。
+- 新增 [docs/PC端使用说明.md](docs/PC端使用说明.md)：连接拓扑、四种连接方式、冷启动限制、报错对照表。
+- 新增 `docs/hooks/` 五个模板（00 hello / 01 native trace / 02 SSL bypass / 03 crypto / 04 JNI register），均在 Pixel 6 + 17.5.2 实机验证。
+- 新增 `tools/load_hook.py`：PC 端一条命令附着 gadget 并加载脚本。
+- 实测记录：frida 17.5.2 里 `typeof Java === 'undefined'`、`Module.findExportByName` 已移除（`findGlobalExportByName` / 模块实例 `findExportByName` 可用）、脚本运行时是 QJS。
 
 **1.0.1**
 

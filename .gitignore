@@ -4,6 +4,9 @@ build/
 # 打包产物由 Release 提供；仓库内保留 dist/ 目录占位
 dist/*.zip
 
+# hook 模板的 node 依赖（dist/ 打包产物入库，方便没装 node 的人直接用）
+docs/hooks/node_modules/
+
 __pycache__/
 *.pyc
 .DS_Store

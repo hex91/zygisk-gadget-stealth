@@ -1,0 +1,19 @@
+{
+  "name": "gs-hooks",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Gadget Stealth 的 Java 层 hook 模板（frida 17 需要 frida-compile 打包）",
+  "scripts": {
+    "build": "npm run build:ssl && npm run build:crypto",
+    "build:ssl": "frida-compile 02-ssl-bypass.js -o dist/02-ssl-bypass.js -c",
+    "build:crypto": "frida-compile 03-crypto-hook.js -o dist/03-crypto-hook.js -c",
+    "watch:ssl": "frida-compile 02-ssl-bypass.js -o dist/02-ssl-bypass.js -w"
+  },
+  "devDependencies": {
+    "frida-compile": "^19.1.0",
+    "frida-java-bridge": "^7.0.13"
+  },
+  "allowScripts": {
+    "frida@17.25.2": true
+  }
+}
