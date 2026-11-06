@@ -1,3 +1,5 @@
+> **此版本的 Release 已下线**（资产与 tag 均已删除），仅在此保留说明以便追溯。请使用 [v1.0.1](https://github.com/hex91/zygisk-gadget-stealth/releases/latest)。
+
 首个版本：把 frida-gadget 统一到官方 **17.5.2**，按 App 注入、去特征、可配置、可看状态。
 
 ## 安装包

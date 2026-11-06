@@ -2,6 +2,13 @@
 
 > 基于 Zygisk 的 **frida-gadget 按 App 持久化注入**模块：版本与 PC / 设备 frida-server 统一到 **17.5.2**，带去特征、可配置、可查看安装状态的完整管理层。
 
+<p align="center">
+  <a href="https://github.com/hex91/zygisk-gadget-stealth/releases/latest"><img src="https://img.shields.io/github/v/release/hex91/zygisk-gadget-stealth?label=release&color=2ea44f" alt="latest release"></a>
+  <a href="https://github.com/hex91/zygisk-gadget-stealth/releases"><img src="https://img.shields.io/github/downloads/hex91/zygisk-gadget-stealth/total?label=downloads&color=0969da" alt="downloads"></a>
+  <img src="https://img.shields.io/badge/frida--gadget-17.5.2-orange" alt="frida-gadget 17.5.2">
+  <img src="https://img.shields.io/badge/arch-arm64%20%7C%20arm-blueviolet" alt="arm64 / arm">
+</p>
+
 本仓库是独立新工程，参考 [lico-n/ZygiskFrida](https://github.com/lico-n/ZygiskFrida)（MIT）的注入思路，重写了 Zygisk 模块并补齐了版本统一、检测面处理和状态管理。
 
 <p align="center">
@@ -71,7 +78,9 @@ adb shell su -c 'sh /data/adb/modules/zygisk_gadget_stealth/gadget_ctl.sh verify
 前置条件：已 root、Zygisk 实现可用（Zygisk Next / KernelSU + Zygisk / Magisk Zygisk）。实测环境：Pixel 6 / Android 15 / KernelSU + **Zygisk Next 1.5.2**。
 
 ```bash
-# 1) 下载 Releases 里的 gadget-stealth-1.0.1.zip 并推到手机
+# 1) 下载最新的 zip（也可点页面顶部的 release / downloads 徽章）
+#    curl -L -o gadget-stealth-1.0.1.zip \
+#      https://github.com/hex91/zygisk-gadget-stealth/releases/latest/download/gadget-stealth-1.0.1.zip
 adb push gadget-stealth-1.0.1.zip /data/local/tmp/
 
 # 2) 安装（KernelSU / SukiSU）
@@ -375,4 +384,4 @@ python tools/load_hook.py --script docs/hooks/dist/02-ssl-bypass.js
 
 **1.0.0**
 
-- 首个版本，见 [v1.0.0 Release](https://github.com/hex91/zygisk-gadget-stealth/releases/tag/v1.0.0)。
+- 首个版本（已由 1.0.1 取代，下载请用上面的 badge 或 [最新 Release](https://github.com/hex91/zygisk-gadget-stealth/releases/latest)）。
