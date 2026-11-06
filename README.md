@@ -364,6 +364,7 @@ python tools/load_hook.py --script docs/hooks/dist/02-ssl-bypass.js
 - 新增 `docs/hooks/` 五个模板（00 hello / 01 native trace / 02 SSL bypass / 03 crypto / 04 JNI register），均在 Pixel 6 + 17.5.2 实机验证。
 - 新增 `tools/load_hook.py`：PC 端一条命令附着 gadget 并加载脚本。
 - 实测记录：frida 17.5.2 里 `typeof Java === 'undefined'`、`Module.findExportByName` 已移除（`findGlobalExportByName` / 模块实例 `findExportByName` 可用）、脚本运行时是 QJS。
+- 补 SELinux 标签判据（手机端 3.1 节）：`cp` 进 `.gsys` / 原地编辑不丢标签（目录标签会继承），只有 `mv` 搬入或目录重建才必须补 `chcon`；`reload` 与 WebUI「重新生成配置」都会自动 `chcon -R`。
 
 **1.0.1**
 

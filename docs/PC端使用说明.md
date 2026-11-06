@@ -209,11 +209,15 @@ gadget 是**进程内**的 agent，不是 spawn 型的 server，所以：
 ```bash
 adb push final.js /data/local/tmp/gs_final.js
 adb shell su -c 'cp /data/local/tmp/gs_final.js /data/local/tmp/.gsys/hook.js'
+# 保险：cp 进 .gsys 时标签已自动继承 system_file，这行防的是目录被重建过
+# （用 mv 从 /data/local/tmp 搬进来的文件会保留 shell_data_file，必须补这一行）
 adb shell su -c 'chcon u:object_r:system_file:s0 /data/local/tmp/.gsys/hook.js'
 adb shell su -c 'sh /data/adb/modules/zygisk_gadget_stealth/gadget_ctl.sh mode script'
 adb shell am force-stop com.example.app
 adb shell monkey -p com.example.app -c android.intent.category.LAUNCHER 1
 ```
+
+> SELinux 标签的完整判据（哪种操作会破坏、手机文件管理器改完要不要补）见 `手机端使用说明.md` 第 3.1 节。
 
 ---
 

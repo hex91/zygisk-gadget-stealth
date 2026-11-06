@@ -39,9 +39,13 @@ python tools/load_hook.py --script docs/hooks/dist/02-ssl-bypass.js
 ```bash
 adb push docs/hooks/01-native-trace.js /data/local/tmp/gs_hook.js
 adb shell su -c 'cp /data/local/tmp/gs_hook.js /data/local/tmp/.gsys/hook.js'
+# 保险：cp 进 .gsys 时标签已自动继承 system_file（用 mv 搬进来则必须补）
 adb shell su -c 'chcon u:object_r:system_file:s0 /data/local/tmp/.gsys/hook.js'
+adb shell su -c 'chmod 644 /data/local/tmp/.gsys/hook.js'
 adb shell am force-stop <包名>
 ```
+
+> 改完脚本要**重启目标 App** 才生效（script 模式只在注入时读一次）。SELinux 标签什么时候需要补，见 `../手机端使用说明.md` 第 3.1 节。
 
 日志：`/data/user/0/<包名>/gs-hook.log`
 
