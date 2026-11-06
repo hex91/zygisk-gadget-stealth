@@ -55,6 +55,8 @@
   .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
   .chip{font-size:12px;padding:4px 9px;border-radius:8px;background:var(--chip);color:var(--dim)}
   .chip.ok{color:var(--ok)} .chip.bad{color:var(--err)}
+  /* 符合预期的「不适用」项（如 script 模式零端口），用绿色而不是警示色 */
+  .chip.na{color:var(--ok);background:var(--chip)}
   .link{color:var(--acc);text-decoration:none;word-break:break-all;font-size:13px}
   .note{font-size:12.5px;color:var(--dim);margin-top:10px;line-height:1.6}
   .warnbox{background:rgba(183,121,31,.12);border:1px solid rgba(183,121,31,.4);
@@ -172,7 +174,7 @@
     badge($("s-loaded"), yn(m.loaded) ? "已加载" : "未加载", yn(m.loaded) ? "ok" : "err");
     badge($("s-enabled"), yn(m.enabled) ? "已启用" : "已停用", yn(m.enabled) ? "ok" : "warn");
     $("s-mode").textContent  = m.mode === "script" ? "script（无端口）" : "listen（可交互）";
-    $("s-port").textContent  = m.mode === "script" ? "—" : "127.0.0.1:" + (m.port || "-");
+    $("s-port").textContent  = m.mode === "script" ? "—（script 不监听）" : "127.0.0.1:" + (m.port || "-");
     $("s-delay").textContent = (m.delay || "-") + " ms";
     $("s-n").textContent     = (m.n || "0") + " 个 · 已记录 " + (m.active || "0") + " 次注入";
     $("s-last").textContent  = m.last && m.last !== "-" ? m.last : "暂无";
@@ -215,14 +217,23 @@
                 states:"注入记录", listen:"端口监听"};
   function renderCheck(m){
     var box = $("checks"); box.innerHTML = "";
+    var scriptMode = (S.mode === "script");
     Object.keys(LABELS).forEach(function(k){
       var v = m[k];
-      // script 模式下零端口是正确的，不该标红
-      var neutral = (k === "listen" && v === "0" && S.mode === "script");
       var ok = (k === "states") ? (Number(v) > 0) : (v === "1");
+      var soft = false, txt;
+      // 端口未监听从来不是故障：script 模式是设计如此，listen 模式只是目标 App 还没起来
+      if (k === "listen" && v !== "1") {
+        soft = true;
+        txt = scriptMode ? " 不监听（script 预期）" : " 未监听（等 App 启动）";
+      } else if (k === "states" && Number(v) === 0) {
+        soft = true; txt = " 暂无（还没启动目标 App）";
+      } else {
+        txt = ok ? " ✓" : " ✗";
+      }
       var c = document.createElement("span");
-      c.className = "chip " + (neutral ? "" : (ok ? "ok" : "bad"));
-      c.textContent = LABELS[k] + " " + (neutral ? "关闭(正常)" : (ok ? "✓" : "✗"));
+      c.className = "chip " + (soft ? "na" : (ok ? "ok" : "bad"));
+      c.textContent = LABELS[k] + txt;
       box.appendChild(c);
     });
   }

@@ -2,7 +2,7 @@
 """打包 KernelSU / SukiSU / Magisk 模块 zip。
 
 用法: python tools/build_zip.py
-输出: dist/gadget-stealth-1.0.0.zip
+输出: dist/gadget-stealth-<module.prop 里的 version>.zip
 """
 import hashlib
 import os
@@ -10,7 +10,18 @@ import zipfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MOD = os.path.join(ROOT, "module")
-OUT = os.path.join(ROOT, "dist", "gadget-stealth-1.0.0.zip")
+
+
+def module_version():
+    with open(os.path.join(MOD, "module.prop"), encoding="utf-8") as f:
+        for line in f:
+            if line.startswith("version="):
+                return line.split("=", 1)[1].strip()
+    raise SystemExit("module.prop 里没有 version=")
+
+
+VER = module_version()
+OUT = os.path.join(ROOT, "dist", "gadget-stealth-%s.zip" % VER)
 
 TEXT_EXT = {".sh", ".prop", ".conf", ".txt", ".js", ".html", ".json", ".md"}
 

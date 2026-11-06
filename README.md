@@ -71,11 +71,11 @@ adb shell su -c 'sh /data/adb/modules/zygisk_gadget_stealth/gadget_ctl.sh verify
 前置条件：已 root、Zygisk 实现可用（Zygisk Next / KernelSU + Zygisk / Magisk Zygisk）。实测环境：Pixel 6 / Android 15 / KernelSU + **Zygisk Next 1.5.2**。
 
 ```bash
-# 1) 下载 Releases 里的 gadget-stealth-1.0.0.zip 并推到手机
-adb push gadget-stealth-1.0.0.zip /data/local/tmp/
+# 1) 下载 Releases 里的 gadget-stealth-1.0.1.zip 并推到手机
+adb push gadget-stealth-1.0.1.zip /data/local/tmp/
 
 # 2) 安装（KernelSU / SukiSU）
-adb shell su -c 'ksud module install /data/local/tmp/gadget-stealth-1.0.0.zip'
+adb shell su -c 'ksud module install /data/local/tmp/gadget-stealth-1.0.1.zip'
 # Magisk 用户在管理器里选「从本地安装」
 
 # 3) 必须重启一次，Zygisk 模块要重启才被加载
@@ -235,7 +235,7 @@ frida-ps -H 127.0.0.1:39527         # 整机进程
 
 ```bash
 NDK=/path/to/android-sdk/ndk-bundle bash native/build.sh   # 增量编译，产出 module/zygisk/*.so
-python tools/build_zip.py                                  # 产出 dist/gadget-stealth-1.0.0.zip
+python tools/build_zip.py                                  # 产出 dist/gadget-stealth-1.0.1.zip
 ```
 
 `native/build.sh` 用 NDK 的 clang 直接编译 5 个 xDL C 文件 + 3 个 C++ 文件，静态链接 libc++，导出 `zygisk_module_entry`。所有文本源文件强制 LF（`.gitattributes`），Windows 下 CRLF 会让设备 sh 报错。
@@ -301,6 +301,8 @@ Pixel 6 / Android 15 / KernelSU + Zygisk Next 1.5.2 / SukiSU 4.1.0 上全程实�
 
 **改了配置没生效**：要 `reload` 并 **force-stop 重启目标 App**（gadget 只在 App 启动时注入）。改 `settings.conf` 不用重启手机，但装/卸模块必须重启。
 
+**「端口监听」不是 ✗ 而是「不监听（script 预期）」**：这是设计如此。`script` 模式本来就不开端口，自检项用绿色中性样式显示；切到 `listen` 后文字变成「未监听（等 App 启动）」，等目标 App 真正起来才会变 `✓`。
+
 **script 模式怎么确认脚本跑了**：默认 `hook.js` 会在 App 私有目录写 `gs_proof.txt`；`gadget_ctl.sh status` 也会显示 `.gs_state.<pid>` 记录。
 
 **32 位 App 不注入**：需要 `lib_name32` 指向的 32 位 gadget 存在（`check1` 里 `lib32`），且 Zygisk 的 armeabi-v7a.so 被加载。
@@ -308,3 +310,18 @@ Pixel 6 / Android 15 / KernelSU + Zygisk Next 1.5.2 / SukiSU 4.1.0 上全程实�
 **WebUI 点按钮没反应 / 超时**：本模块所有 WebUI 命令都是单行同步返回；确认管理器是 SukiSU / KernelSU 且 WebUI 桥接可用（Magisk 无 WebUI，用「执行」按钮或 PC 端 `status.py`）。
 
 **回退**：`su -c 'ksud module uninstall zygisk_gadget_stealth'` 后重启；或 `gadget_ctl.sh off` 立即停用（模块保留）。
+
+---
+
+## 11. 更新日志
+
+**1.0.1**
+
+- WebUI：`script` 模式下「端口监听」不再显示为异常 —— 改用绿色中性样式「不监听（script 预期）」，`listen` 模式下未监听显示「未监听（等 App 启动）」，只有真正该报错的项才标红。
+- WebUI：「注入记录」在从未注入时显示「暂无（还没启动目标 App）」，不再标红。
+- WebUI：当前状态里的「端口」行在 `script` 模式下写明「—（script 不监听）」。
+- 打包：`tools/build_zip.py` 从 `module.prop` 读版本号，产物名随版本自动变。
+
+**1.0.0**
+
+- 首个版本，见 [v1.0.0 Release](https://github.com/hex91/zygisk-gadget-stealth/releases/tag/v1.0.0)。
