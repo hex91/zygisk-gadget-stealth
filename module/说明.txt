@@ -1,0 +1,67 @@
+========================================================
+ Gadget Stealth 1.0.0 — 设备内速查说明
+========================================================
+
+【这是什么】
+用 Zygisk 在指定 App 启动时注入官方 frida-gadget 17.5.2（arm64 / arm）。
+版本与 PC 端 frida 17.5.2、设备 frida-server 17.5.2 完全一致。
+不 ptrace、不改 APK 签名；默认 script 模式，不监听任何端口。
+
+【文件在哪】
+数据目录    /data/local/tmp/.gsys/
+  settings.conf       主配置（改完要 reload）
+  libgcore.so         64 位 gadget（伪装名）
+  libgcore32.so       32 位 gadget
+  libgcore.config     gadget 行为配置（由 reload 自动生成）
+  hook.js             script 模式加载的脚本
+模块目录    /data/adb/modules/zygisk_gadget_stealth/
+  gadget_ctl.sh       管理命令（状态 / 配置 / 自检）
+  action.sh           管理器「执行」按钮 -> 完整状态面板
+  webroot/index.html  管理器「打开」按钮 -> WebUI
+
+【三个查看状态的入口】
+1) 模块卡片点「打开」= WebUI（可改配置、看自检、看来源）
+2) 模块卡片点「执行」= 文本状态面板
+3) PC: python tools/status.py
+
+【常用命令】
+ CTL=/data/adb/modules/zygisk_gadget_stealth/gadget_ctl.sh
+ su -c "sh $CTL status"              完整状态
+ su -c "sh $CTL targets"             目标列表
+ su -c "sh $CTL add com.foo.bar"     加目标
+ su -c "sh $CTL del com.foo.bar"     删目标
+ su -c "sh $CTL mode listen"         切交互模式
+ su -c "sh $CTL mode script"         切回无端口模式
+ su -c "sh $CTL port 27052"          改端口
+ su -c "sh $CTL on|off"              全局开关
+ su -c "sh $CTL reload"              重新生成配置
+ su -c "sh $CTL verify"              版本 / 大小 / sha256
+
+【改完配置怎么生效】
+ sh $CTL reload
+ am force-stop <包名>
+ monkey -p <包名> -c android.intent.category.LAUNCHER 1
+不用重启手机。但安装 / 卸载模块必须重启一次（Zygisk 模块加载时机）。
+
+【listen 模式连 PC】
+ adb forward tcp:27052 tcp:27052
+ frida-ps -H 127.0.0.1:27052
+ frida -H 127.0.0.1:27052 -n Gadget -l hook.js
+
+【去特征开关】
+ hide_maps       把 gadget 的 maps 段匿名化（默认开）
+ hide_threads    伪装 gum-js-loop / frida-gadget / gmain / gdbus（默认开）
+ no_log          不写 logcat（默认开）
+ hide_module_map 连模块自身 so 也匿名化（实验性，默认关）
+
+【注意】
+- 不要用 frida-server 再 attach 已加载 gadget 的进程，两份 Gum 会互相踩。
+- frida 17 起 Java bridge 不内置，hook.js 里要 frida-java-bridge + frida-compile。
+- 仅限自有设备或已授权目标的研究用途。
+
+【上游】
+ frida/frida  https://github.com/frida/frida
+ 17.5.2       https://github.com/frida/frida/releases/tag/17.5.2
+ 参考项目     https://github.com/lico-n/ZygiskFrida (MIT)
+ xDL          https://github.com/hexhacking/xDL (MIT)
+========================================================

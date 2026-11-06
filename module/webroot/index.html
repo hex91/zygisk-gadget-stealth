@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gadget Stealth</title>
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#ffffff; --fg:#1b1f24; --dim:#6b7280;
+    --line:#e3e6ea; --acc:#2f6fd0; --ok:#0f8a53; --warn:#b7791f; --err:#c0392b;
+    --chip:#eef2f7; --code:#f0f2f5;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#12151a; --card:#1c2129; --fg:#e8eaed; --dim:#9aa3ae;
+      --line:#2c333d; --acc:#6ea8fe; --ok:#4ade80; --warn:#fbbf24; --err:#f87171;
+      --chip:#262d36; --code:#232a33; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC",sans-serif;
+    padding:16px 14px 40px; padding-top:max(16px,env(safe-area-inset-top))}
+  h1{font-size:20px;margin:0 0 2px}
+  .sub{color:var(--dim);font-size:12.5px;margin-bottom:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:14px 15px;margin-bottom:14px}
+  h2{font-size:14px;margin:0 0 12px;color:var(--dim);font-weight:600;letter-spacing:.4px}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .row:last-child{border-bottom:0}
+  .k{color:var(--dim);flex:0 0 40%}
+  .v{text-align:right;word-break:break-all;font-variant-numeric:tabular-nums}
+  .badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;
+    background:var(--chip);color:var(--dim)}
+  .badge.ok{background:rgba(15,138,83,.13);color:var(--ok)}
+  .badge.warn{background:rgba(183,121,31,.14);color:var(--warn)}
+  .badge.err{background:rgba(192,57,43,.13);color:var(--err)}
+  .grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  button, .btn{font:inherit;font-size:13.5px;padding:8px 13px;border-radius:9px;
+    border:1px solid var(--line);background:var(--chip);color:var(--fg);cursor:pointer}
+  button:active{opacity:.7}
+  button.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+  button.on{background:rgba(15,138,83,.16);border-color:var(--ok);color:var(--ok)}
+  input{font:inherit;font-size:14px;padding:8px 10px;border-radius:9px;
+    border:1px solid var(--line);background:var(--code);color:var(--fg);width:100%}
+  .field{display:flex;gap:8px;margin-top:10px;align-items:center}
+  .field label{flex:0 0 68px;color:var(--dim);font-size:13px}
+  .out{margin-top:10px;font-size:13px;color:var(--dim);display:none;
+    background:var(--code);border-radius:9px;padding:9px 11px;white-space:pre-wrap;word-break:break-all}
+  .out.show{display:block}
+  .tlist{margin-top:10px}
+  .titem{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+  .titem:last-child{border-bottom:0}
+  .tname{flex:1;font-size:13px;word-break:break-all}
+  .titem button{padding:5px 9px;font-size:12px}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
+  .chip{font-size:12px;padding:4px 9px;border-radius:8px;background:var(--chip);color:var(--dim)}
+  .chip.ok{color:var(--ok)} .chip.bad{color:var(--err)}
+  .link{color:var(--acc);text-decoration:none;word-break:break-all;font-size:13px}
+  .note{font-size:12.5px;color:var(--dim);margin-top:10px;line-height:1.6}
+  .warnbox{background:rgba(183,121,31,.12);border:1px solid rgba(183,121,31,.4);
+    color:var(--warn);border-radius:10px;padding:9px 11px;font-size:12.5px;margin-top:10px}
+</style>
+</head>
+<body>
+<h1>Gadget Stealth</h1>
+<div class="sub">frida-gadget 17.5.2 · Zygisk 按 App 注入 · 状态与配置</div>
+
+<div class="card">
+  <h2>当前状态</h2>
+  <div class="row"><span class="k">模块版本</span><span class="v" id="s-ver">-</span></div>
+  <div class="row"><span class="k">frida-gadget</span><span class="v" id="s-gver">-</span></div>
+  <div class="row"><span class="k">Zygisk 已加载</span><span class="v"><span id="s-loaded" class="badge">-</span></span></div>
+  <div class="row"><span class="k">全局开关</span><span class="v"><span id="s-enabled" class="badge">-</span></span></div>
+  <div class="row"><span class="k">注入模式</span><span class="v" id="s-mode">-</span></div>
+  <div class="row"><span class="k">端口</span><span class="v" id="s-port">-</span></div>
+  <div class="row"><span class="k">注入延迟</span><span class="v" id="s-delay">-</span></div>
+  <div class="row"><span class="k">注入目标</span><span class="v" id="s-n">-</span></div>
+  <div class="row"><span class="k">最近注入</span><span class="v" id="s-last">-</span></div>
+  <div class="row"><span class="k">伪装 so</span><span class="v" id="s-lib">-</span></div>
+  <div class="row"><span class="k">数据目录</span><span class="v" id="s-data">-</span></div>
+  <div id="warn" class="warnbox" style="display:none"></div>
+</div>
+
+<div class="card">
+  <h2>安装自检</h2>
+  <div class="chips" id="checks"><span class="chip">读取中…</span></div>
+  <div class="grid">
+    <button id="b-refresh">刷新状态</button>
+    <button id="b-reload">重新生成配置</button>
+    <button id="b-status">查看完整状态(执行按钮)</button>
+  </div>
+  <div class="out" id="out"></div>
+</div>
+
+<div class="card">
+  <h2>模式与参数</h2>
+  <div class="grid">
+    <button id="b-script">script（无端口·最隐蔽）</button>
+    <button id="b-listen">listen（可交互调试）</button>
+  </div>
+  <div class="field"><label>端口</label><input id="i-port" inputmode="numeric" placeholder="27052"><button id="b-port">应用</button></div>
+  <div class="field"><label>延迟 ms</label><input id="i-delay" inputmode="numeric" placeholder="1200"><button id="b-delay">应用</button></div>
+  <div class="grid" style="margin-top:12px">
+    <button id="b-on">启用注入</button>
+    <button id="b-off">停用注入</button>
+  </div>
+  <div class="note">改完只需 <b>force-stop 并重启目标 App</b>，不用重启手机。listen 模式请用 <code>adb forward tcp:&lt;端口&gt; tcp:&lt;端口&gt;</code> 再 <code>frida -H 127.0.0.1:&lt;端口&gt; -n Gadget -l hook.js</code>。</div>
+</div>
+
+<div class="card">
+  <h2>注入目标</h2>
+  <div class="field"><input id="i-pkg" placeholder="包名，如 com.example.app"><button id="b-add" class="primary">添加</button></div>
+  <div class="tlist" id="tlist"></div>
+</div>
+
+<div class="card">
+  <h2>去特征开关</h2>
+  <div class="grid">
+    <button id="b-maps">maps 匿名化</button>
+    <button id="b-threads">线程名伪装</button>
+    <button id="b-nolog">静默日志</button>
+  </div>
+  <div class="note">
+    maps 匿名化把 gadget 的文件路径从 <code>/proc/&lt;pid&gt;/maps</code> 抹成匿名映射；
+    线程名伪装持续把 <code>gum-js-loop / frida-gadget / gmain / gdbus</code> 改成中性名字；
+    静默日志关闭 logcat 输出。script 模式不监听任何端口，是三者之外最关键的一项。
+  </div>
+</div>
+
+<div class="card">
+  <h2>关于与来源</h2>
+  <div class="row"><span class="k">二进制</span><span class="v" id="i-gver">-</span></div>
+  <div class="row"><span class="k">架构 / 大小</span><span class="v" id="i-size">-</span></div>
+  <div class="row"><span class="k">sha256(前16)</span><span class="v" id="i-sha">-</span></div>
+  <div class="row"><span class="k">上游项目</span><span class="v"><a class="link" id="i-up" href="#">github.com/frida/frida</a></span></div>
+  <div class="row"><span class="k">该版本发布页</span><span class="v"><a class="link" id="i-rel" href="#">releases/tag/17.5.2</a></span></div>
+  <div class="row"><span class="k">参考项目</span><span class="v"><a class="link" id="i-ref" href="#">lico-n/ZygiskFrida</a></span></div>
+  <div class="row"><span class="k">许可</span><span class="v" id="i-lic">-</span></div>
+  <div class="grid"><button id="b-copy">复制上游链接</button></div>
+  <div class="note">本模块只做「按 App 注入 + 去特征 + 配置/状态管理」封装，未修改 frida 本体。
+    Zygisk API 头、xDL 加载器与 remap 思路来自 <a class="link" href="https://github.com/lico-n/ZygiskFrida">lico-n/ZygiskFrida</a>（MIT）与 HexHacking/xDL（MIT）。
+    仅限自有设备或已授权目标的研究用途。</div>
+</div>
+
+<script>
+(function(){
+  var CTL = "sh /data/adb/modules/zygisk_gadget_stealth/gadget_ctl.sh ";
+  var S = {port:"27052", delay:"1200", mode:"script", enabled:"1",
+           maps:"1", threads:"1", nolog:"1"};
+  function $(id){ return document.getElementById(id); }
+  function kv(line){
+    var o = {}; String(line||"").split(";").forEach(function(p){
+      var i = p.indexOf("="); if(i > 0) o[p.slice(0,i)] = p.slice(i+1);
+    }); return o;
+  }
+  function exec(cmd){
+    try {
+      if (typeof ksu === "undefined" || !ksu.exec) throw new Error("当前管理器不支持 WebUI 执行");
+      return ksu.exec(cmd);
+    } catch(e){ return "ERR;msg=" + e.message; }
+  }
+  function show(msg, bad){
+    var o = $("out"); o.textContent = msg; o.className = "out show";
+    o.style.color = bad ? "var(--err)" : "var(--dim)";
+  }
+  function badge(el, text, cls){ el.textContent = text; el.className = "badge" + (cls ? " " + cls : ""); }
+  function yn(v){ return v === "1"; }
+
+  function renderStatus(m){
+    $("s-ver").textContent   = (m.ver || "-") + " / frida " + (m.gver || "-");
+    $("s-gver").textContent  = m.gver || "-";
+    badge($("s-loaded"), yn(m.loaded) ? "已加载" : "未加载", yn(m.loaded) ? "ok" : "err");
+    badge($("s-enabled"), yn(m.enabled) ? "已启用" : "已停用", yn(m.enabled) ? "ok" : "warn");
+    $("s-mode").textContent  = m.mode === "script" ? "script（无端口）" : "listen（可交互）";
+    $("s-port").textContent  = m.mode === "script" ? "—" : "127.0.0.1:" + (m.port || "-");
+    $("s-delay").textContent = (m.delay || "-") + " ms";
+    $("s-n").textContent     = (m.n || "0") + " 个 · 已记录 " + (m.active || "0") + " 次注入";
+    $("s-last").textContent  = m.last && m.last !== "-" ? m.last : "暂无";
+    $("s-lib").textContent   = m.lib || "-";
+    $("s-data").textContent  = m.data || "-";
+    S.port = m.port || S.port; S.delay = m.delay || S.delay; S.mode = m.mode || S.mode;
+    S.enabled = m.enabled || S.enabled; S.maps = m.maps || S.maps;
+    S.threads = m.threads || S.threads; S.nolog = m.nolog || S.nolog;
+    $("i-port").value = S.port; $("i-delay").value = S.delay;
+    $("b-script").className = S.mode === "script" ? "on" : "";
+    $("b-listen").className = S.mode === "listen" ? "on" : "";
+    $("b-maps").className    = yn(S.maps) ? "on" : "";
+    $("b-threads").className = yn(S.threads) ? "on" : "";
+    $("b-nolog").className   = yn(S.nolog) ? "on" : "";
+    renderTargets(m.tinfo || "");
+    var w = $("warn");
+    if (!yn(m.loaded)) { w.style.display = "block"; w.textContent = "Zygisk 未加载本模块：请确认 Zygisk/Zygisk Next 已启用，并且安装后重启过手机。"; }
+    else if (!yn(m.cfg) || m.lib64 === "0") { w.style.display = "block"; w.textContent = "配置或 gadget so 缺失，点「重新生成配置」或重新安装模块。"; }
+    else w.style.display = "none";
+  }
+  function renderTargets(tinfo){
+    var box = $("tlist"); box.innerHTML = "";
+    if (!tinfo) { box.innerHTML = '<div class="chip">暂无目标</div>'; return; }
+    tinfo.split("|").forEach(function(item){
+      if (!item) return;
+      var a = item.split(":"), pkg = a[0], en = a[1] === "1", dly = a[2] || "-";
+      var d = document.createElement("div"); d.className = "titem";
+      var n = document.createElement("span"); n.className = "tname";
+      n.textContent = pkg + "  ·  " + dly + "ms  ·  " + (en ? "启用" : "停用");
+      n.style.color = en ? "" : "var(--dim)";
+      var bt = document.createElement("button"); bt.textContent = en ? "停用" : "启用";
+      bt.onclick = function(){ run(CTL + (en ? "disable " : "enable ") + pkg); };
+      var bd = document.createElement("button"); bd.textContent = "删除";
+      bd.onclick = function(){ run(CTL + "del " + pkg); };
+      d.appendChild(n); d.appendChild(bt); d.appendChild(bd); box.appendChild(d);
+    });
+  }
+  var LABELS = {module:"模块 so", zygisk:"Zygisk 加载", lib64:"gadget 64", lib32:"gadget 32",
+                settings:"settings.conf", gadgetcfg:"gadget.config", hook:"hook.js",
+                states:"注入记录", listen:"端口监听"};
+  function renderCheck(m){
+    var box = $("checks"); box.innerHTML = "";
+    Object.keys(LABELS).forEach(function(k){
+      var v = m[k];
+      // script 模式下零端口是正确的，不该标红
+      var neutral = (k === "listen" && v === "0" && S.mode === "script");
+      var ok = (k === "states") ? (Number(v) > 0) : (v === "1");
+      var c = document.createElement("span");
+      c.className = "chip " + (neutral ? "" : (ok ? "ok" : "bad"));
+      c.textContent = LABELS[k] + " " + (neutral ? "关闭(正常)" : (ok ? "✓" : "✗"));
+      box.appendChild(c);
+    });
+  }
+  function renderInfo(m){
+    $("i-gver").textContent = m.gver || "-";
+    $("i-size").textContent = (m.arch || "-") + " · " +
+      (Number(m.size64)/1048576).toFixed(1) + " MB / " + (Number(m.size32)/1048576).toFixed(1) + " MB";
+    $("i-sha").textContent = m.sha || "-";
+    $("i-lic").textContent = m.lic || "-";
+    [["i-up",m.up],["i-rel",m.release],["i-ref",m.ref]].forEach(function(p){
+      var e = $(p[0]); e.href = "#"; e.setAttribute("data-url", p[1] || "");
+      e.textContent = (p[1] || "-").replace(/^https:\/\//, "");
+    });
+  }
+  function openUrl(u){
+    if (!u) return;
+    exec("am start -a android.intent.action.VIEW -d '" + u + "' --user 0");
+  }
+  ["i-up","i-rel","i-ref"].forEach(function(id){
+    $(id).onclick = function(e){ e.preventDefault(); openUrl(this.getAttribute("data-url")); };
+  });
+
+  function run(cmd){
+    var r = exec(cmd);
+    var m = kv(r);
+    show(m.msg || (r || "无返回"), r && r.indexOf("ERR;") === 0);
+    refresh();
+    return r;
+  }
+  function refresh(){
+    renderStatus(kv(exec(CTL + "status1")));
+    renderCheck(kv(exec(CTL + "check1")));
+    renderInfo(kv(exec(CTL + "info1")));
+  }
+
+  $("b-refresh").onclick = function(){ refresh(); show("已刷新"); };
+  $("b-reload").onclick  = function(){ run(CTL + "reload"); };
+  $("b-status").onclick  = function(){ show("请在模块卡片点「执行」按钮查看完整状态面板"); };
+  $("b-script").onclick  = function(){ run(CTL + "mode script"); };
+  $("b-listen").onclick  = function(){ run(CTL + "mode listen"); };
+  $("b-on").onclick      = function(){ run(CTL + "on"); };
+  $("b-off").onclick     = function(){ run(CTL + "off"); };
+  $("b-port").onclick    = function(){ run(CTL + "port " + $("i-port").value.trim()); };
+  $("b-delay").onclick   = function(){ run(CTL + "delay " + $("i-delay").value.trim()); };
+  $("b-add").onclick     = function(){
+    var p = $("i-pkg").value.trim();
+    if (!/^[A-Za-z0-9_.]+$/.test(p)) { show("包名只能含字母、数字、点、下划线", true); return; }
+    run(CTL + "add " + p); $("i-pkg").value = "";
+  };
+  $("b-maps").onclick    = function(){ run(CTL + "stealth hide_maps " + (yn(S.maps) ? "0" : "1")); };
+  $("b-threads").onclick = function(){ run(CTL + "stealth hide_threads " + (yn(S.threads) ? "0" : "1")); };
+  $("b-nolog").onclick   = function(){ run(CTL + "stealth no_log " + (yn(S.nolog) ? "0" : "1")); };
+  $("b-copy").onclick    = function(){
+    var t = "https://github.com/frida/frida";
+    try { navigator.clipboard.writeText(t).then(function(){show("已复制");},function(){show("复制失败",true);}); }
+    catch(e){ show("复制失败，请长按选择", true); }
+  };
+
+  refresh();
+})();
+</script>
+</body>
+</html>

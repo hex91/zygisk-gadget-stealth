@@ -1,0 +1,9 @@
+# 编译中间产物（.o / 中间 so）；module/zygisk/*.so 是最终产物，入库以便直接打包
+build/
+
+# 打包产物由 Release 提供；仓库内保留 dist/ 目录占位
+dist/*.zip
+
+__pycache__/
+*.pyc
+.DS_Store

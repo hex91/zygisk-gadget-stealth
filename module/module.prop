@@ -1,0 +1,6 @@
+id=zygisk_gadget_stealth
+name=Gadget Stealth
+version=1.0.0
+versionCode=10000
+author=hex91
+description=frida-gadget 17.5.2 | Zygisk 注入 | 打开 WebUI 查看状态与配置
